@@ -10,7 +10,7 @@ import socket
 from siyi_sdk.siyi_message import *
 from time import sleep, time
 import logging
-from utils import toInt
+from siyi_sdk.utils import toInt
 import threading
 import siyi_sdk.cameras as cameras
 
