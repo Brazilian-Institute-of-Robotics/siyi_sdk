@@ -7,7 +7,7 @@ Copyright 2022
 
 """
 from os import stat
-import siyi_sdk.crc16_python
+from siyi_sdk.crc16_python import crc16_str_swap
 import logging
 from siyi_sdk.utils import toHex
 
