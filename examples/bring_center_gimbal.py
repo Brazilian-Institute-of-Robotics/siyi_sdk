@@ -1,9 +1,9 @@
 """
-@file test_print_attitude.py
-@Description: This is a test script shows how to get and print attitude data
+@file test_center_gimbal.py
+@Description: This is a test script for using the SIYI SDK Python implementation to bring the gimbal to center position
 @Author: Mohamed Abdelkader
 @Contact: mohamedashraf123@gmail.com
-All rights reserved 2024
+All rights reserved 2022
 """
 
 import sys
@@ -15,7 +15,7 @@ parent_directory = os.path.dirname(current)
   
 sys.path.append(parent_directory)
 
-from siyi_sdk import SIYISDK
+from siyi_sdk.siyi_sdk import SIYISDK
 
 def test():
     cam = SIYISDK(server_ip="192.168.144.25", port=37260)
@@ -24,13 +24,13 @@ def test():
         print("No connection ")
         exit(1)
 
-    i =0
-    while i<10:
-        print(f"Attidue (yaw, pitch, roll): {cam.getAttitude()}")
-        sleep(0.5)
-        i += 1
+    val = cam.requestCenterGimbal()
+    sleep(1)
+    val = cam.requestFunctionFeedback()
+    sleep(0.1)
+    print("Centering gimbal: ", cam.getCenteringFeedback())
+    print("Gimbal angles (yaw,pitch,roll) deg: ", cam.getAttitude())
 
-    print('DONE')
     cam.disconnect()
 
 if __name__ == "__main__":
