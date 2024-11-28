@@ -63,7 +63,7 @@ Python implementation of the SDK of SIYI camera-gimbal systems.
 * An example of how to receive image frames from camera, see `examples/receive_rtsp_stream.py`
 * An example of how to stream image frames to an RTMP server, see `examples/rtmp_stream.py`
 * An example of how to receive an image stream from camera using RTSP and send them to an RTMP server, see `examples/from_rtsp_to_rtmp.py`
-* C++ application that uses GStreamer to recieve RTSP stream in the camera is available in the `src` directory.
+* C++ application that uses GStreamer to recieve RTSP stream in the camera is available in the `gstreamer_cpp/` directory.
     It can be compiled using
     ```bash
      g++ rtsp_gstreamer.cpp -o rtsp_gstreamer `pkg-config --cflags --libs opencv4 gstreamer-1.0 gstreamer-app-1.0`
