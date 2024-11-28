@@ -21,17 +21,14 @@ Python implementation of the SDK of SIYI camera-gimbal systems.
 * Done. 
 
 # Usage
-* Check the scripts in the `siyi_sdk/tests` directory to learn how to use the SDK
+* Check the scripts in the `siyi_sdk/examples` directory to learn how to use the SDK
 
-* To import this module in your code, copy the `siyi_sdk.py` `siyi_message.py` `utility.py` `crc16_python.py` scripts in your code directory, and import as follows, and then follow the test examples
-    ```python
-    from siyi_sdk import SIYISDK
-    ```
-* Example: To run the `test_gimbal_rotation.py` run,
+* To import this module in your code, install the sdk with pip, and import as follows:
     ```bash
-    cd siyi_sdk/tests
-    python3 test_gimbal_rotation.py
-  
+    pip install git+https://github.com/Brazilian-Institute-of-Robotics/siyi_sdk.git
+    ```
+    ```python
+    from siyi_sdk.siyi_sdk import SIYISDK
     ```
 
 * Use gui
@@ -40,10 +37,9 @@ Python implementation of the SDK of SIYI camera-gimbal systems.
     python3 gui/tkgui.py
     ```
 
-
-    <video src="gui/demo.mp4" controls title="Demo"></video>
+    <video src="doc/demo.mp4" controls title="Demo"></video>
     
-    <img src="gui/gui_tkinter.png" width=200> </img>
+    <img src="doc/gui_tkinter.png" width=200> </img>
 
 # Video Streaming
 ## Requirements
@@ -64,9 +60,9 @@ Python implementation of the SDK of SIYI camera-gimbal systems.
     ```
 
 ## Examples
-* An example of how to receive image frames from camera, see `tests/test_rtsp.py`
-* An example of how to stream image frames to an RTMP server, see `tests/test_rtmp_stream.py`
-* An example of how to receive an image stream from camera using RTSP and send them to an RTMP server, see `tests/test_from_rtsp_to_rtmp.py`
+* An example of how to receive image frames from camera, see `examples/receive_rtsp_stream.py`
+* An example of how to stream image frames to an RTMP server, see `examples/rtmp_stream.py`
+* An example of how to receive an image stream from camera using RTSP and send them to an RTMP server, see `examples/from_rtsp_to_rtmp.py`
 * C++ application that uses GStreamer to recieve RTSP stream in the camera is available in the `src` directory.
     It can be compiled using
     ```bash
