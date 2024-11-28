@@ -20,13 +20,16 @@ import pytest
 from siyi_sdk.siyi_sdk import SIYISDK
 from siyi_sdk.siyi_message import MotionModeMsg
 
+
 @pytest.fixture
 def camera_ip(request):
     return request.config.getoption("--camera_ip")
 
+
 @pytest.fixture
 def camera_port(request):
     return request.config.getoption("--camera_port")
+
 
 def test_absolute_zoom(camera_ip, camera_port):
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)
@@ -44,6 +47,7 @@ def test_absolute_zoom(camera_ip, camera_port):
 
     cam.disconnect()
 
+
 def test_fpv_mode():
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)
 
@@ -52,6 +56,7 @@ def test_fpv_mode():
     sleep(2)
 
     cam.disconnect()
+
 
 def test_set_gimbal_rotation():
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)
@@ -64,6 +69,7 @@ def test_set_gimbal_rotation():
 
     cam.disconnect()
 
+
 def test_lock_mode():
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)
 
@@ -74,6 +80,7 @@ def test_lock_mode():
 
     cam.disconnect()
 
+
 def test_follow_mode():
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)
 
@@ -83,6 +90,7 @@ def test_follow_mode():
     assert cam.getMotionMode() == MotionModeMsg.FOLLOW
 
     cam.disconnect()
+
 
 def test_zoom():
     cam = SIYISDK(server_ip=camera_ip, port=camera_port)

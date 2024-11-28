@@ -1,5 +1,5 @@
 """
-@file test_get_hw_id.py
+@file get_hw_id.py
 @Description: This is a test script for using the SIYI SDK Python implementation to get hardware ID
 @Author: Mohamed Abdelkader
 @Contact: mohamedashraf123@gmail.com
@@ -12,10 +12,11 @@ from time import sleep
 
 current = os.path.dirname(os.path.realpath(__file__))
 parent_directory = os.path.dirname(current)
-  
+
 sys.path.append(parent_directory)
 
 from siyi_sdk.siyi_sdk import SIYISDK
+
 
 def test():
     cam = SIYISDK(server_ip="192.168.144.25", port=37260)
@@ -28,6 +29,7 @@ def test():
     print("Camera hardware ID: ", cam.getHardwareID())
     print("Camera type: ", cam.getCameraTypeString())
     cam.disconnect()
+
 
 if __name__ == "__main__":
     test()

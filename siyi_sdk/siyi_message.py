@@ -6,16 +6,19 @@ Email: mohamedashraf123@gmail.com
 Copyright 2022
 
 """
+
 from os import stat
 from siyi_sdk.crc16_python import crc16_str_swap
 import logging
 from siyi_sdk.utils import toHex
 
+
 class FirmwareMsg:
-    seq=0
-    code_board_ver=''
-    gimbal_firmware_ver=''
-    zoom_firmware_ver=''
+    seq = 0
+    code_board_ver = ""
+    gimbal_firmware_ver = ""
+    zoom_firmware_ver = ""
+
 
 class HardwareIDMsg:
     # x6B: ZR10
@@ -24,71 +27,88 @@ class HardwareIDMsg:
     # x78: ZR30
     # x82: ZT6
     # x7A: ZT30
-    CAM_DICT ={'6B': 'ZR10', '73': 'A8 mini', '75': 'A2 mini', '78': 'ZR30', '82': 'ZT6', '7A': 'ZT30'}
-    seq=0
-    id=''
-    cam_type_str=''
+    CAM_DICT = {
+        "6B": "ZR10",
+        "73": "A8 mini",
+        "75": "A2 mini",
+        "78": "ZR30",
+        "82": "ZT6",
+        "7A": "ZT30",
+    }
+    seq = 0
+    id = ""
+    cam_type_str = ""
+
 
 class AutoFocusMsg:
-    seq=0
-    success=False
+    seq = 0
+    success = False
+
 
 class ManualZoomMsg:
-    seq=0
-    level=-1
+    seq = 0
+    level = -1
+
 
 class ManualFocusMsg:
-    seq=0
-    success=False
+    seq = 0
+    success = False
+
 
 class GimbalSpeedMsg:
-    seq=0
-    success=False
+    seq = 0
+    success = False
+
 
 class CenterMsg:
-    seq=0
-    success=False
+    seq = 0
+    success = False
+
 
 class RecordingMsg:
-    seq=0
-    state=-1
-    OFF=0
-    ON=1
-    TF_EMPTY=2
-    TD_DATA_LOSS=3
+    seq = 0
+    state = -1
+    OFF = 0
+    ON = 1
+    TF_EMPTY = 2
+    TD_DATA_LOSS = 3
+
 
 class MountDirMsg:
-    seq=0
-    dir=-1
-    NORMAL=0
-    UPSIDE=1
+    seq = 0
+    dir = -1
+    NORMAL = 0
+    UPSIDE = 1
+
 
 class MotionModeMsg:
-    seq=0
-    mode=-1
-    LOCK=0
-    FOLLOW=1
-    FPV=2
+    seq = 0
+    mode = -1
+    LOCK = 0
+    FOLLOW = 1
+    FPV = 2
 
 
 class FuncFeedbackInfoMsg:
-    seq=0
-    info_type=None
-    SUCCESSFUL=0
-    PHOTO_FAIL=1
-    HDR_ON=2
-    HDR_OFF=3
-    RECROD_FAIL=4
+    seq = 0
+    info_type = None
+    SUCCESSFUL = 0
+    PHOTO_FAIL = 1
+    HDR_ON = 2
+    HDR_OFF = 3
+    RECROD_FAIL = 4
+
 
 class AttitdueMsg:
-    seq=    0
-    stamp=  0 # seconds
-    yaw=    0.0
-    pitch=  0.0
-    roll=   0.0
-    yaw_speed=  0.0 # deg/s
-    pitch_speed=0.0
-    roll_speed= 0.0
+    seq = 0
+    stamp = 0  # seconds
+    yaw = 0.0
+    pitch = 0.0
+    roll = 0.0
+    yaw_speed = 0.0  # deg/s
+    pitch_speed = 0.0
+    roll_speed = 0.0
+
 
 class SetGimbalAnglesMsg:
     seq = 0
@@ -96,44 +116,48 @@ class SetGimbalAnglesMsg:
     pitch = 0.0
     roll = 0.0
 
+
 class RequestDataStreamMsg:
     # data_type uint8_t
-    ATTITUDE_DATA = '01'
-    LASER_DATA = '02'
+    ATTITUDE_DATA = "01"
+    LASER_DATA = "02"
 
     # Frequency
-    FREQ = {0: '00', 2: '01', 4: '02', 5: '03', 10: '04', 20: '05', 50: '06', 100: '07'}
+    FREQ = {0: "00", 2: "01", 4: "02", 5: "03", 10: "04", 20: "05", 50: "06", 100: "07"}
 
-    seq = 0 
-    data_type = 1 # uint8_t
-    data_frequency = 0 # 0 means OFF (0, 2, 4, 5, 10, 20, 50, 100)
+    seq = 0
+    data_type = 1  # uint8_t
+    data_frequency = 0  # 0 means OFF (0, 2, 4, 5, 10, 20, 50, 100)
+
 
 class RequestAbsoluteZoomMsg:
     seq = 0
     success = 0
 
-class  CurrentZoomValueMsg:
+
+class CurrentZoomValueMsg:
     seq = 0
     int_part = 1
     float_part = 0
-    level=0.0
+    level = 0.0
+
 
 class COMMAND:
-    ACQUIRE_FW_VER = '01'
-    ACQUIRE_HW_ID = '02'
-    AUTO_FOCUS = '04'
-    MANUAL_ZOOM = '05'
-    MANUAL_FOCUS = '06'
-    GIMBAL_SPEED = '07'
-    CENTER = '08'
-    ACQUIRE_GIMBAL_INFO = '0a'
-    FUNC_FEEDBACK_INFO = '0b'
-    PHOTO_VIDEO_HDR = '0c'
-    ACQUIRE_GIMBAL_ATT = '0d'
-    SET_GIMBAL_ATTITUDE = '0e'
-    SET_DATA_STREAM = '25'
-    ABSOLUTE_ZOOM = '0f'
-    CURRENT_ZOOM_VALUE = '18'
+    ACQUIRE_FW_VER = "01"
+    ACQUIRE_HW_ID = "02"
+    AUTO_FOCUS = "04"
+    MANUAL_ZOOM = "05"
+    MANUAL_FOCUS = "06"
+    GIMBAL_SPEED = "07"
+    CENTER = "08"
+    ACQUIRE_GIMBAL_INFO = "0a"
+    FUNC_FEEDBACK_INFO = "0b"
+    PHOTO_VIDEO_HDR = "0c"
+    ACQUIRE_GIMBAL_ATT = "0d"
+    SET_GIMBAL_ATTITUDE = "0e"
+    SET_DATA_STREAM = "25"
+    ABSOLUTE_ZOOM = "0f"
+    CURRENT_ZOOM_VALUE = "18"
 
 
 #############################################
@@ -141,31 +165,33 @@ class SIYIMESSAGE:
     """
     Structure of SIYI camera messages
     """
+
     def __init__(self, debug=False) -> None:
-        self._debug= debug # print debug messages
+        self._debug = debug  # print debug messages
         if self._debug:
             d_level = logging.DEBUG
         else:
             d_level = logging.INFO
-        LOG_FORMAT='[%(levelname)s] %(asctime)s [SIYIMessage::%(funcName)s] :\t%(message)s'
+        LOG_FORMAT = (
+            "[%(levelname)s] %(asctime)s [SIYIMessage::%(funcName)s] :\t%(message)s"
+        )
         logging.basicConfig(format=LOG_FORMAT, level=d_level)
         self._logger = logging.getLogger(self.__class__.__name__)
 
-        self.HEADER='5566'# STX, 2 bytes
-        self._ctr ='01'        
+        self.HEADER = "5566"  # STX, 2 bytes
+        self._ctr = "01"
 
-        self._seq= 0
+        self._seq = 0
 
-        self._cmd_id='00' # 1 byte
-        
+        self._cmd_id = "00"  # 1 byte
+
         self._data_len = 0
-        
+
         # String of data byes (in hex)
-        self._data=''
+        self._data = ""
 
-        self._crc16='0000' # low byte (2 characters) on the left!
+        self._crc16 = "0000"  # low byte (2 characters) on the left!
 
-    
     def incrementSEQ(self, val):
         """
         Increments sequence number by one, converts them to hex, and revereses the byte order.
@@ -178,35 +204,37 @@ class SIYIMESSAGE:
         --
         seq_str: [string] String value of the sequence number in reveresed byte order
         """
-        
+
         if not isinstance(val, int):
             self._logger.warning("Sequence value is not integer. Returning zero")
             return "0000"
-        if val> 65535:
-            self._logger.warning("Sequence value is greater than 65535. Resetting to zero")
+        if val > 65535:
+            self._logger.warning(
+                "Sequence value is greater than 65535. Resetting to zero"
+            )
             self._seq = 0
             return "0000"
-        if val<0:
+        if val < 0:
             self._logger.warning("Sequence value is negative. Resetting to zero")
             return "0000"
 
-        seq = val+1
+        seq = val + 1
         self._seq = seq
 
         seq_hex = hex(seq)
-        seq_hex = seq_hex[2:] # remove '0x'
-        if len(seq_hex)==3:
-            seq_hex = '0'+seq_hex
-        elif len(seq_hex)==1:
-            seq_hex = '000'+seq_hex
-        elif len(seq_hex)==2:
-            seq_str = '00'+seq_hex
+        seq_hex = seq_hex[2:]  # remove '0x'
+        if len(seq_hex) == 3:
+            seq_hex = "0" + seq_hex
+        elif len(seq_hex) == 1:
+            seq_hex = "000" + seq_hex
+        elif len(seq_hex) == 2:
+            seq_str = "00" + seq_hex
         else:
-            seq='0000'
-        
+            seq = "0000"
+
         low_b = seq_hex[-2:]
         high_b = seq_hex[0:2]
-        seq_str = low_b+high_b
+        seq_str = low_b + high_b
 
         return seq_str
 
@@ -227,24 +255,24 @@ class SIYIMESSAGE:
             self._logger.error("Data is not of type string")
             return "0000"
         # We expect number of chartacters to be even (each byte is represented by two cahrs e.g. '0A')
-        if (len(data)%2) != 0:
-            data = '0'+data # Pad 0 from the left, as sometimes it's ignored!
-        L = int(len(data)/2)
+        if (len(data) % 2) != 0:
+            data = "0" + data  # Pad 0 from the left, as sometimes it's ignored!
+        L = int(len(data) / 2)
 
         len_hex = hex(L)
-        len_hex = len_hex[2:] # remove '0x'
-        if len(len_hex)==3:
-            len_hex = '0'+len_hex
-        elif len(len_hex)==1:
-            len_hex = '000'+len_hex
-        elif len(len_hex)==2:
-            len_hex = '00'+len_hex
+        len_hex = len_hex[2:]  # remove '0x'
+        if len(len_hex) == 3:
+            len_hex = "0" + len_hex
+        elif len(len_hex) == 1:
+            len_hex = "000" + len_hex
+        elif len(len_hex) == 2:
+            len_hex = "00" + len_hex
         else:
-            len_hex='0000'
-        
+            len_hex = "0000"
+
         low_b = len_hex[-2:]
         high_b = len_hex[0:2]
-        len_str = low_b+high_b
+        len_str = low_b + high_b
 
         return len_str
 
@@ -264,50 +292,55 @@ class SIYIMESSAGE:
         - seq [int] message sequence
         """
         data = None
-        
+
         if not isinstance(msg, str):
             self._logger.error("Input message is not a string")
             return data
 
         # 10 bytes: STX+CTRL+Data_len+SEQ+CMD_ID+CRC16
         #            2 + 1  +    2   + 2 +   1  + 2
-        MINIMUM_DATA_LENGTH=10*2
-        if len(msg)<MINIMUM_DATA_LENGTH:
+        MINIMUM_DATA_LENGTH = 10 * 2
+        if len(msg) < MINIMUM_DATA_LENGTH:
             self._logger.error("No data to decode")
             return data
 
-        
         # Now we got minimum amount of data. Check if we have enough
         # Data length, bytes are reversed, according to SIYI SDK
-        low_b = msg[6:8] # low byte
-        high_b = msg[8:10] # high byte
-        data_len = high_b+low_b
-        data_len = int('0x'+data_len, base=16)
-        char_len = data_len*2 # number of characters. Each byte is represented by two characters in hex, e.g. '0A'= 2 chars
+        low_b = msg[6:8]  # low byte
+        high_b = msg[8:10]  # high byte
+        data_len = high_b + low_b
+        data_len = int("0x" + data_len, base=16)
+        char_len = (
+            data_len * 2
+        )  # number of characters. Each byte is represented by two characters in hex, e.g. '0A'= 2 chars
 
         # check crc16, if msg is OK!
-        msg_crc=msg[-4:] # last 4 characters
-        payload=msg[:-4]
-        expected_crc=crc16_str_swap(payload)
-        if expected_crc!=msg_crc:
-            self._logger.error("CRC16 is not valid. Got %s. Expected %s. Message might be corrupted!", msg_crc, expected_crc)
+        msg_crc = msg[-4:]  # last 4 characters
+        payload = msg[:-4]
+        expected_crc = crc16_str_swap(payload)
+        if expected_crc != msg_crc:
+            self._logger.error(
+                "CRC16 is not valid. Got %s. Expected %s. Message might be corrupted!",
+                msg_crc,
+                expected_crc,
+            )
             return data
-        
+
         # Sequence
-        low_b = msg[10:12] # low byte
-        high_b = msg[12:14] # high byte
-        seq_hex = high_b+low_b
-        seq = int('0x'+seq_hex, base=16)
-        
+        low_b = msg[10:12]  # low byte
+        high_b = msg[12:14]  # high byte
+        seq_hex = high_b + low_b
+        seq = int("0x" + seq_hex, base=16)
+
         # CMD ID
         cmd_id = msg[14:16]
-        
+
         # DATA
-        if data_len>0:
-            data = msg[16:16+char_len]
+        if data_len > 0:
+            data = msg[16 : 16 + char_len]
         else:
-            data=''
-        
+            data = ""
+
         self._data = data
         self._data_len = data_len
         self._cmd_id = cmd_id
@@ -325,33 +358,33 @@ class SIYIMESSAGE:
         seq = self.incrementSEQ(self._seq)
         data_len = self.computeDataLen(data)
         # msg_front = self.HEADER+self._ctr+data_len+seq+cmd_id+data
-        msg_front = self.HEADER+self._ctr+data_len+'0000'+cmd_id+data
+        msg_front = self.HEADER + self._ctr + data_len + "0000" + cmd_id + data
         crc = crc16_str_swap(msg_front)
         if crc is not None:
-            msg = msg_front+crc
+            msg = msg_front + crc
             self._logger.debug("Encoded msg: %s", msg)
             return msg
         else:
             self._logger.error("Could not encode message. crc16 is None")
-            return ''
+            return ""
 
     ########################################################
     #               Message definitions                    #
     ########################################################
-    
+
     def firmwareVerMsg(self):
         """
         Returns message string of the Acqsuire Firmware Version msg
         """
-        data=""
+        data = ""
         cmd_id = COMMAND.ACQUIRE_FW_VER
         return self.encodeMsg(data, cmd_id)
-    
+
     def hwIdMsg(self):
         """
         Returns message string for the Acquire Hardware ID
         """
-        data=""
+        data = ""
         cmd_id = COMMAND.ACQUIRE_HW_ID
         return self.encodeMsg(data, cmd_id)
 
@@ -359,7 +392,7 @@ class SIYIMESSAGE:
         """
         Gimbal status information msg
         """
-        data=""
+        data = ""
         cmd_id = COMMAND.ACQUIRE_GIMBAL_INFO
         return self.encodeMsg(data, cmd_id)
 
@@ -367,7 +400,7 @@ class SIYIMESSAGE:
         """
         Function feedback information msg
         """
-        data=""
+        data = ""
         cmd_id = COMMAND.FUNC_FEEDBACK_INFO
         return self.encodeMsg(data, cmd_id)
 
@@ -375,7 +408,7 @@ class SIYIMESSAGE:
         """
         Take photo msg
         """
-        data="00"
+        data = "00"
         cmd_id = COMMAND.PHOTO_VIDEO_HDR
         return self.encodeMsg(data, cmd_id)
 
@@ -383,7 +416,7 @@ class SIYIMESSAGE:
         """
         Video Record msg
         """
-        data="02"
+        data = "02"
         cmd_id = COMMAND.PHOTO_VIDEO_HDR
         return self.encodeMsg(data, cmd_id)
 
@@ -391,7 +424,7 @@ class SIYIMESSAGE:
         """
         Auto focus msg
         """
-        data="01"
+        data = "01"
         cmd_id = COMMAND.AUTO_FOCUS
         return self.encodeMsg(data, cmd_id)
 
@@ -399,7 +432,7 @@ class SIYIMESSAGE:
         """
         Center gimbal msg
         """
-        data="01"
+        data = "01"
         cmd_id = COMMAND.CENTER
         return self.encodeMsg(data, cmd_id)
 
@@ -407,7 +440,7 @@ class SIYIMESSAGE:
         """
         Lock mode msg
         """
-        data="03"
+        data = "03"
         cmd_id = COMMAND.PHOTO_VIDEO_HDR
         return self.encodeMsg(data, cmd_id)
 
@@ -415,15 +448,15 @@ class SIYIMESSAGE:
         """
         Follow mode msg
         """
-        data="04"
+        data = "04"
         cmd_id = COMMAND.PHOTO_VIDEO_HDR
         return self.encodeMsg(data, cmd_id)
-    
+
     def fpvModeMsg(self):
         """
         FPV mode msg
         """
-        data="05"
+        data = "05"
         cmd_id = COMMAND.PHOTO_VIDEO_HDR
         return self.encodeMsg(data, cmd_id)
 
@@ -431,7 +464,7 @@ class SIYIMESSAGE:
         """
         Acquire Gimbal Attiude msg
         """
-        data=""
+        data = ""
         cmd_id = COMMAND.ACQUIRE_GIMBAL_ATT
         return self.encodeMsg(data, cmd_id)
 
@@ -439,7 +472,7 @@ class SIYIMESSAGE:
         """
         Zoom in Msg
         """
-        data=toHex(1,8)
+        data = toHex(1, 8)
         cmd_id = COMMAND.MANUAL_ZOOM
         return self.encodeMsg(data, cmd_id)
 
@@ -447,7 +480,7 @@ class SIYIMESSAGE:
         """
         Zoom out Msg
         """
-        data=toHex(-1,8)
+        data = toHex(-1, 8)
         cmd_id = COMMAND.MANUAL_ZOOM
         return self.encodeMsg(data, cmd_id)
 
@@ -455,7 +488,7 @@ class SIYIMESSAGE:
         """
         Stop Zoom Msg
         """
-        data=toHex(0,8)
+        data = toHex(0, 8)
         cmd_id = COMMAND.MANUAL_ZOOM
         return self.encodeMsg(data, cmd_id)
 
@@ -463,7 +496,7 @@ class SIYIMESSAGE:
         """
         Focus 1 Msg
         """
-        data="01"
+        data = "01"
         cmd_id = COMMAND.MANUAL_FOCUS
         return self.encodeMsg(data, cmd_id)
 
@@ -471,7 +504,7 @@ class SIYIMESSAGE:
         """
         Focus -1 Msg
         """
-        data="ff"
+        data = "ff"
         cmd_id = COMMAND.MANUAL_FOCUS
         return self.encodeMsg(data, cmd_id)
 
@@ -479,7 +512,7 @@ class SIYIMESSAGE:
         """
         Focus 0 Msg
         """
-        data="00"
+        data = "00"
         cmd_id = COMMAND.MANUAL_FOCUS
         return self.encodeMsg(data, cmd_id)
 
@@ -495,22 +528,22 @@ class SIYIMESSAGE:
         - yaw_speed [int] in degrees
         - pitch_speed [int] in degrees
         """
-        if yaw_speed>100:
-            yaw_speed=100
-        if yaw_speed<-100:
-            yaw_speed=-100
+        if yaw_speed > 100:
+            yaw_speed = 100
+        if yaw_speed < -100:
+            yaw_speed = -100
 
-        if pitch_speed>100:
-            pitch_speed=100
-        if pitch_speed<-100:
-            pitch_speed=-100
+        if pitch_speed > 100:
+            pitch_speed = 100
+        if pitch_speed < -100:
+            pitch_speed = -100
 
-        data1=toHex(yaw_speed, 8)
-        data2=toHex(pitch_speed, 8)
-        data=data1+data2
+        data1 = toHex(yaw_speed, 8)
+        data2 = toHex(pitch_speed, 8)
+        data = data1 + data2
         cmd_id = COMMAND.GIMBAL_SPEED
         return self.encodeMsg(data, cmd_id)
-    
+
     def setGimbalAttitude(self, target_yaw_deg, target_pitch_deg):
         """
         Set gimbal angles Msg.
@@ -527,15 +560,15 @@ class SIYIMESSAGE:
 
         yaw_hex = toHex(target_yaw_deg, 16)
         pitch_hex = toHex(target_pitch_deg, 16)
-        data = yaw_hex+pitch_hex
+        data = yaw_hex + pitch_hex
         cmd_id = COMMAND.SET_GIMBAL_ATTITUDE
         return self.encodeMsg(data, cmd_id)
-    
+
     def dataStreamMsg(self, dtype: int, freq: int):
         """
         Request data stream at specific rate.
         Supported stream are
-        Attitude and Laser. Laser only for ZT 30, but frequency is not supported yet. 
+        Attitude and Laser. Laser only for ZT 30, but frequency is not supported yet.
         Frequency is supported for attitude,
 
         Params
@@ -548,19 +581,23 @@ class SIYIMESSAGE:
         elif dtype == 2:
             data_type_hex = RequestDataStreamMsg.LASER_DATA
         else:
-            self._logger.error(f"Data stream type {type} not supported. Must be 1 (atitude) or 2 (laser)")
-            return ''
-        
+            self._logger.error(
+                f"Data stream type {type} not supported. Must be 1 (atitude) or 2 (laser)"
+            )
+            return ""
+
         f = int(freq)
         try:
             f_hex = RequestDataStreamMsg.FREQ[f]
         except Exception as e:
-            self._logger.error(f"Frequency {freq} not supported {e}. Not requesting attitude stream.")
-            return ''
-        data = data_type_hex+f_hex
+            self._logger.error(
+                f"Frequency {freq} not supported {e}. Not requesting attitude stream."
+            )
+            return ""
+        data = data_type_hex + f_hex
         cmd_id = COMMAND.SET_DATA_STREAM
         return self.encodeMsg(data, cmd_id)
-    
+
     def absoluteZoomMsg(self, zoom_level: float):
         """
         Params
@@ -575,12 +612,12 @@ class SIYIMESSAGE:
 
         d1 = toHex(integer_part, 8)
         d2 = toHex(decimal_part, 8)
-        data = d1+d2
+        data = d1 + d2
         cmd_id = COMMAND.ABSOLUTE_ZOOM
 
         return self.encodeMsg(data, cmd_id)
-    
+
     def requestCurrentZoomMsg(self):
-        data=""
+        data = ""
         cmd_id = COMMAND.CURRENT_ZOOM_VALUE
         return self.encodeMsg(data, cmd_id)
