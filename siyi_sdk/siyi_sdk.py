@@ -372,6 +372,8 @@ class SIYISDK:
                 self.parseRequestStreamMsg()
             elif cmd_id==COMMAND.CURRENT_ZOOM_VALUE:
                 self.parseCurrentZoomLevelMsg(data, seq)
+            elif cmd_id==COMMAND.ABSOLUTE_ZOOM:
+                self.parseZoomMsg(data, seq)
             else:
                 self._logger.warning("CMD ID is not recognized")
         
@@ -497,6 +499,17 @@ class SIYISDK:
         return self.sendMsg(msg)
     
     def requestAbsoluteZoom(self, level: float):
+        """
+        Sends request for absolute zoom
+
+        Params
+        --
+        [float] Zoom value.
+        
+        Returns
+        --
+        [bool] True: success. False: fail
+        """
         msg = self._out_msg.absoluteZoomMsg(level)
         return self.sendMsg(msg)
     
