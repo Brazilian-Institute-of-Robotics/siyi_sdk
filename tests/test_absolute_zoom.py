@@ -16,6 +16,8 @@ parent_directory = os.path.dirname(current)
 sys.path.append(parent_directory)
 
 from siyi_sdk.siyi_sdk import SIYISDK
+from siyi_sdk.stream import SIYIRTSP
+
 
 def test():
     cam = SIYISDK(server_ip="192.168.144.25", port=37260)
@@ -24,16 +26,20 @@ def test():
         print("No connection ")
         exit(1)
 
+    cam_str = cam.getCameraTypeString()
+    rtsp = SIYIRTSP(rtsp_url="rtsp://192.168.144.25:8554/main.264",debug=False, cam_name=cam_str)
+    rtsp.setShowWindow(True)
+
     desired_zoom_level = 3.0
     print(f"Setting zoom level to {desired_zoom_level}")
     cam.requestAbsoluteZoom(desired_zoom_level)
     sleep(3)
-    print(f"Zoom level: {cam.getCurrentZoomLevel()}")
+    print(f"Zoom level: {cam.getZoomLevel()}")
 
     print("Setting zoom level to 1")
     cam.requestAbsoluteZoom(1.0)
     sleep(3)
-    print(f"Zoom level: {cam.getCurrentZoomLevel()}")
+    print(f"Zoom level: {cam.getZoomLevel()}")
     
 
     cam.disconnect()
