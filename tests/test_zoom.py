@@ -30,7 +30,7 @@ def test():
     rtsp.setShowWindow(True)
     
     val = cam.requestZoomIn()
-    sleep(0.5)
+    sleep(1)
     val = cam.requestZoomHold()
     sleep(1)
     print("Zoom level: ", cam.getZoomLevel())
