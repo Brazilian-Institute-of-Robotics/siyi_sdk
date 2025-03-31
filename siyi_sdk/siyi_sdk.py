@@ -89,6 +89,7 @@ class SIYISDK:
         self._request_absolute_zoom_msg = RequestAbsoluteZoomMsg()
         self._current_zoom_level_msg = CurrentZoomValueMsg()
         self._last_att_seq = -1
+        self._gimbal_info = GimbalInfoMsg()
 
         return True
 
@@ -771,10 +772,15 @@ class SIYISDK:
             self._record_msg.seq=seq
             self._mountDir_msg.seq=seq
             self._motionMode_msg.seq=seq
-            
+
+            self._gimbal_info.hdr_state = int('0x'+msg[2:4], base=16)
             self._record_msg.state = int('0x'+msg[6:8], base=16)
+            self._gimbal_info.recording_state.state = self._record_msg.state
             self._motionMode_msg.mode = int('0x'+msg[8:10], base=16)
+            self._gimbal_info.motion_mode.mode = self._motionMode_msg.mode
             self._mountDir_msg.dir = int('0x'+msg[10:12], base=16)
+            self._gimbal_info.gimbal_mounting.dir = self._mountDir_msg.dir
+            self._gimbal_info.video_output_status = int('0x'+msg[12:14], base=16)
 
             self._logger.debug("Recording state %s", self._record_msg.state)
             self._logger.debug("Mounting direction %s", self._mountDir_msg.dir)
@@ -945,6 +951,9 @@ class SIYISDK:
     
     def getDataStreamFeedback(self):
         return(self._request_data_stream_msg.data_type)
+    
+    def getGimbalInfo(self):
+        return(self._gimbal_info)
 
     #################################################
     #                 Set functions                 #
