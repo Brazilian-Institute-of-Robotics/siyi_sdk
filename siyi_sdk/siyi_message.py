@@ -118,6 +118,15 @@ class  CurrentZoomValueMsg:
     float_part = 0
     level=0.0
 
+class GimbalInfoMsg:
+    hdr_state = -1 # 0 is off, 1 is on
+    recording_state = RecordingMsg()
+    gimbal_mounting = MountDirMsg()
+    motion_mode = MotionModeMsg()
+    video_output_status = -1 # 0 means hdmi=on and cvbs=off, 1 means hdmi=off and cvbs=on, 2 means both off
+
+
+
 class COMMAND:
     ACQUIRE_FW_VER = '01'
     ACQUIRE_HW_ID = '02'
