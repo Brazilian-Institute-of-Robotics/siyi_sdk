@@ -593,3 +593,14 @@ class SIYIMESSAGE:
         data=""
         cmd_id = COMMAND.CURRENT_ZOOM_VALUE
         return self.encodeMsg(data, cmd_id)
+
+    def setVideoOutput(self, status):
+        """
+        Configure video output to cvbs, hdmi or none
+        Params
+        --
+        - status: enable hdmi=6, enable cvbs=7, turn off both=8
+        """
+        data=toHex(status, 8)
+        cmd_id = COMMAND.PHOTO_VIDEO_HDR
+        return self.encodeMsg(data, cmd_id)

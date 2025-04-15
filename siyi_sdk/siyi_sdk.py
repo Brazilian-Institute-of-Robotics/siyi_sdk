@@ -711,6 +711,21 @@ class SIYISDK:
         """
         msg = self._out_msg.dataStreamMsg(2, freq)
         return self.sendMsg(msg)
+    
+    def configureVideoOutput(self, status: int):
+        """
+        Sends request for configure video output
+
+        Params
+        --
+        [int] status to set.
+        
+        Returns
+        --
+        [bool] True: success. False: fail
+        """
+        msg = self._out_msg.setVideoOutput(status)
+        return self.sendMsg(msg)
 
     ####################################################
     #                Parsing functions                 #
