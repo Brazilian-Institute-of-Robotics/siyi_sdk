@@ -47,6 +47,8 @@ class SIYISDK:
         self._rcv_wait_t = 5  # Receiving wait time
         self._socket.settimeout(self._rcv_wait_t)
 
+        self._send_lock = threading.Lock()
+
         self.resetVars()
 
         # Stop threads flag
@@ -158,15 +160,10 @@ class SIYISDK:
             except Exception as e:
                 self._logger.error(f"Error closing socket: {e}")
 
-        # Wait for threads to finish, if they're still alive
-        if self._recv_thread.is_alive():
-            self._recv_thread.join()
-        if self._conn_thread.is_alive():
-            self._conn_thread.join()
-        if self._g_info_thread.is_alive():
-            self._g_info_thread.join()
-        if self._g_att_thread.is_alive():
-            self._g_att_thread.join()
+        # Wait for threads to finish with a timeout to avoid hanging
+        for t in [self._recv_thread, self._conn_thread, self._g_info_thread, self._g_att_thread]:
+            if t.is_alive():
+                t.join(timeout=3)
 
         # Reset the stop flag and other variables
         self.resetVars()
@@ -202,8 +199,8 @@ class SIYISDK:
                 self.checkConnection()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in connection loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in connection loop: {e}")
                 break
 
     # def recvLoop(self):
@@ -247,8 +244,9 @@ class SIYISDK:
                 self.requestGimbalInfo()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in gimbal info loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in gimbal info loop: {e}")
+                break
 
     def gimbalAttLoop(self, t):
         """
@@ -263,8 +261,9 @@ class SIYISDK:
                 self.requestGimbalAttitude()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in gimbal attitude loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in gimbal attitude loop: {e}")
+                break
 
     def sendMsg(self, msg):
         """
@@ -274,12 +273,16 @@ class SIYISDK:
         --
         msg [str] Message to send
         """
+        if self._stop:
+            return False
         b = bytes.fromhex(msg)
         try:
-            self._socket.sendto(b, (self._server_ip, self._port))
+            with self._send_lock:
+                self._socket.sendto(b, (self._server_ip, self._port))
             return True
         except Exception as e:
-            self._logger.error("Could not send bytes")
+            if not self._stop:
+                self._logger.error("Could not send bytes: %s", e)
             return False
 
     def rcvMsg(self):
@@ -292,8 +295,10 @@ class SIYISDK:
 
     def recvLoop(self):
         self._logger.debug("Started data receiving thread")
-        while( not self._stop):
+        while not self._stop:
             self.bufferCallback()
+            if self._stop:
+                break
         self._logger.debug("Exiting data receiving thread")
 
     
@@ -303,8 +308,13 @@ class SIYISDK:
         """
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
+        except OSError as e:
+            if not self._stop:
+                self._logger.error(f"[bufferCallback] {e}")
+            return
         except Exception as e:
-            self._logger.error(f"[bufferCallback] {e}")
+            if not self._stop:
+                self._logger.error(f"[bufferCallback] {e}")
             return
 
         buff_str = buff.hex()
