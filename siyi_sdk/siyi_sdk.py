@@ -90,6 +90,7 @@ class SIYISDK:
         self._request_data_stream_msg = RequestDataStreamMsg()
         self._request_absolute_zoom_msg = RequestAbsoluteZoomMsg()
         self._current_zoom_level_msg = CurrentZoomValueMsg()
+        self._encoding_params_msg = EncodingParamsMsg()
         self._last_att_seq = -1
         self._gimbal_info = GimbalInfoMsg()
 
@@ -130,6 +131,7 @@ class SIYISDK:
                         # sleep(0.5)
                         self.requestCurrentZoomLevel()
                         sleep(0.2)
+                        self.requestCameraEncoding()
                         return True
 
                     if (time() - t0) > maxWaitTime and not self._connected:
@@ -385,6 +387,8 @@ class SIYISDK:
                 self.parseCurrentZoomLevelMsg(data, seq)
             elif cmd_id==COMMAND.ABSOLUTE_ZOOM:
                 self.parseZoomMsg(data, seq)
+            elif cmd_id==COMMAND.ACQUIRE_ENCODING_PARAMS:
+                self.parseEncodingParamsMsg(data, seq)
             else:
                 self._logger.warning("CMD ID is not recognized")
         
@@ -722,6 +726,22 @@ class SIYISDK:
         msg = self._out_msg.dataStreamMsg(2, freq)
         return self.sendMsg(msg)
 
+    def requestCameraEncoding(self, stream_type=1):
+        """
+        Send request to acquire camera encoding parameters for a specific stream type
+        
+        Params
+        ---
+        stream_type: [uint_8] type of stream for which to acquire encoding parameters
+            0: Recording stream
+            1: Main stream
+            2: Sub-stream
+        """
+
+        msg = self._out_msg.acquireEncodingParamsMsg(stream_type)
+
+        return self.sendMsg(msg)
+
     ####################################################
     #                Parsing functions                 #
     ####################################################
@@ -919,6 +939,22 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
+    def parseEncodingParamsMsg(self, msg:str, seq:int):
+        try:
+            self._encoding_params_msg.seq = seq
+            self._encoding_params_msg.stream_type = int('0x'+msg[0:2], base=16)
+            self._encoding_params_msg.enc_type = int('0x'+msg[2:4], base=16)
+            
+            self._encoding_params_msg.width = int('0x'+msg[6:8]+msg[4:6], base=16)
+            self._encoding_params_msg.height = int('0x'+msg[10:12]+msg[8:10], base=16)
+            self._encoding_params_msg.bitrate = int('0x'+msg[14:16]+msg[12:14], base=16)
+            self._encoding_params_msg.fps = int('0x'+msg[16:18], base=16)
+
+            return True
+        except Exception as e:
+            self._logger.error("Error %s", e)
+            return False
+
 
     ##################################################
     #                   Get functions                #
@@ -964,6 +1000,24 @@ class SIYISDK:
     
     def getGimbalInfo(self):
         return(self._gimbal_info)
+
+    def getStreamType(self):
+        types = {0: "Recording stream", 1: "Main stream", 2: "Sub-stream"}
+        return (types.get(self._encoding_params_msg.stream_type, "Unknown"))
+
+    def getStreamingEncodingType(self):
+        codec = {1: "H264", 2: "H265"}
+        return (codec.get(self._encoding_params_msg.enc_type, "Unknown"))
+
+    def getStreamingResolution (self):
+        return (self._encoding_params_msg.width, self._encoding_params_msg.height)
+
+    def getStreamingBitrate(self):
+        return (self._encoding_params_msg.bitrate)
+
+    def getStreamingFPS(self):
+        return (self._encoding_params_msg.fps)     
+
 
     #################################################
     #                 Set functions                 #
