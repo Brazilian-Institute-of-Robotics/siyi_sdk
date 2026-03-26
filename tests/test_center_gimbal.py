@@ -24,10 +24,8 @@ def test():
         print("No connection ")
         exit(1)
 
-    val = cam.requestCenterGimbal()
+    cam.requestCenterGimbal()
     sleep(1)
-    val = cam.requestFunctionFeedback()
-    sleep(0.1)
     print("Centering gimbal: ", cam.getCenteringFeedback())
     print("Gimbal angles (yaw,pitch,roll) deg: ", cam.getAttitude())
 
