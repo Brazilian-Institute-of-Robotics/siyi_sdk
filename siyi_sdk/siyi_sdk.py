@@ -299,8 +299,6 @@ class SIYISDK:
         self._logger.debug("Started data receiving thread")
         while not self._stop:
             self.bufferCallback()
-            if self._stop:
-                break
         self._logger.debug("Exiting data receiving thread")
 
     
@@ -310,10 +308,6 @@ class SIYISDK:
         """
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
-        except OSError as e:
-            if not self._stop:
-                self._logger.error(f"[bufferCallback] {e}")
-            return
         except Exception as e:
             if not self._stop:
                 self._logger.error(f"[bufferCallback] {e}")
@@ -940,6 +934,23 @@ class SIYISDK:
             return False
 
     def parseEncodingParamsMsg(self, msg:str, seq:int):
+        """
+        Parses the encoding parameters message and updates the corresponding message object.
+        The encoding parameters message contains information about the camera's current streaming settings, including:
+        - Stream type (recording, main, sub)
+        - Encoding type (H264, H265)
+        - Resolution (width and height)
+        - Bitrate - Frames per second (FPS)
+
+        Params
+        --
+        msg [str] The encoding parameters message in hex format
+        seq [int] The sequence number of the message
+
+        Returns
+        --
+        [bool] True if parsing is successful, False otherwise
+        """
         try:
             self._encoding_params_msg.seq = seq
             self._encoding_params_msg.stream_type = int('0x'+msg[0:2], base=16)
@@ -1002,6 +1013,13 @@ class SIYISDK:
         return(self._gimbal_info)
 
     def getStreamType(self):
+        """
+        Returns the type of the streaming channel.
+
+        Returns
+        --
+        [str] The type of the streaming channel.
+        """
         types = {0: "Recording stream", 1: "Main stream", 2: "Sub-stream"}
         return (types.get(self._encoding_params_msg.stream_type, "Unknown"))
 

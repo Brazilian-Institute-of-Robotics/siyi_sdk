@@ -391,8 +391,12 @@ class SIYIMESSAGE:
     def acquireEncodingParamsMsg(self, stream_type):
         """
         Acquire encoding parameters msg
+        
+        Params
+        --
+        - stream_type [int] 0: Recording, 1: Main, 2: Sub
         """
-        data=toHex(stream_type, 8)
+        data = toHex(stream_type, 8)
         cmd_id = COMMAND.ACQUIRE_ENCODING_PARAMS
         return self.encodeMsg(data, cmd_id)
 
