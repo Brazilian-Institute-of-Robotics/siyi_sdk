@@ -52,7 +52,9 @@ class SIYISDK:
         self.resetVars()
 
         # Stop threads flag
-        self._stop = False  
+        self._stop = False
+        # Reconnecting flag
+        self._reconnecting_camera = False
         
         self._recv_thread = threading.Thread(target=self.recvLoop)
 
@@ -122,6 +124,7 @@ class SIYISDK:
                 while True:
                     if self._connected:
                         self._logger.info(f"Successfully connected to camera on attempt {retries + 1}")
+                        self._reconnecting_camera = False
                         self._g_info_thread.start()
                         self._g_att_thread.start()
 
@@ -136,6 +139,7 @@ class SIYISDK:
 
                     if (time() - t0) > maxWaitTime and not self._connected:
                         self._logger.error("Failed to connect to camera, retrying...")
+                        self._reconnecting_camera = True
                         self.disconnect()
                         retries += 1
                         break
@@ -146,6 +150,7 @@ class SIYISDK:
                 retries += 1
 
         self._logger.error(f"Failed to connect after {maxRetries} retries")
+        self.disconnect()
         return False
 
     def disconnect(self):
@@ -196,7 +201,7 @@ class SIYISDK:
         --
         - t [float]: message frequency in seconds
         """
-        while not self._stop:
+        while not self._stop or self._reconnecting_camera:
             try:
                 self.checkConnection()
                 sleep(t)
@@ -283,8 +288,10 @@ class SIYISDK:
                 self._socket.sendto(b, (self._server_ip, self._port))
             return True
         except Exception as e:
-            if not self._stop:
-                self._logger.error("Could not send bytes: %s", e)
+            if not self._stop and not self._reconnecting_camera:
+                self._logger.error(f"Could not send bytes: {e}")
+            else:
+                self._logger.debug(f"sendMsg: Ignoring send error {e}. Socket closed intentionally")
             return False
 
     def rcvMsg(self):
@@ -292,7 +299,11 @@ class SIYISDK:
         try:
             data,addr = self._socket.recvfrom(self._BUFF_SIZE)
         except Exception as e:
-            self._logger.warning("%s. Did not receive message within %s second(s)", e, self._rcv_wait_t)
+            # If socket was intentionally closed, suppress error noise
+            if not self._stop and not self._reconnecting_camera:
+                self._logger.warning(f"rcvMsg: {e}. Did not receive message within {self._rcv_wait_t} second(s)")
+            else:
+                self._logger.debug(f"rcvMsg: Ignoring {e}. Socket closed intentionally")
         return data
 
     def recvLoop(self):
@@ -309,8 +320,10 @@ class SIYISDK:
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
         except Exception as e:
-            if not self._stop:
+            if not self._stop and not self._reconnecting_camera:
                 self._logger.error(f"[bufferCallback] {e}")
+            else:
+                self._logger.debug(f"bufferCallback: Ignoring {e}. Socket closed intentionally")
             return
 
         buff_str = buff.hex()
