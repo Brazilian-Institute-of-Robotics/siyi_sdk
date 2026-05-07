@@ -9,7 +9,7 @@ setup(
     author="Mohamed Abdelkader",
     author_email="mohamedashraf123@gmail.com",
     packages=find_packages(exclude=["*/test",".github"]),
-    install_requires=["opencv-python>=4.0.0", "imutils", "ffmpeg-python"],
+    install_requires=["imutils", "ffmpeg-python"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
