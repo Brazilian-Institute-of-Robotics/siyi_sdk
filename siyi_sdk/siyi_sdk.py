@@ -47,10 +47,14 @@ class SIYISDK:
         self._rcv_wait_t = 5  # Receiving wait time
         self._socket.settimeout(self._rcv_wait_t)
 
+        self._send_lock = threading.Lock()
+
         self.resetVars()
 
         # Stop threads flag
-        self._stop = False  
+        self._stop = False
+        # Reconnecting flag
+        self._reconnecting_camera = False
         
         self._recv_thread = threading.Thread(target=self.recvLoop)
 
@@ -88,6 +92,7 @@ class SIYISDK:
         self._request_data_stream_msg = RequestDataStreamMsg()
         self._request_absolute_zoom_msg = RequestAbsoluteZoomMsg()
         self._current_zoom_level_msg = CurrentZoomValueMsg()
+        self._encoding_params_msg = EncodingParamsMsg()
         self._last_att_seq = -1
         self._gimbal_info = GimbalInfoMsg()
 
@@ -119,6 +124,7 @@ class SIYISDK:
                 while True:
                     if self._connected:
                         self._logger.info(f"Successfully connected to camera on attempt {retries + 1}")
+                        self._reconnecting_camera = False
                         self._g_info_thread.start()
                         self._g_att_thread.start()
 
@@ -128,10 +134,12 @@ class SIYISDK:
                         # sleep(0.5)
                         self.requestCurrentZoomLevel()
                         sleep(0.2)
+                        self.requestCameraEncoding()
                         return True
 
                     if (time() - t0) > maxWaitTime and not self._connected:
                         self._logger.error("Failed to connect to camera, retrying...")
+                        self._reconnecting_camera = True
                         self.disconnect()
                         retries += 1
                         break
@@ -142,6 +150,7 @@ class SIYISDK:
                 retries += 1
 
         self._logger.error(f"Failed to connect after {maxRetries} retries")
+        self.disconnect()
         return False
 
     def disconnect(self):
@@ -158,15 +167,10 @@ class SIYISDK:
             except Exception as e:
                 self._logger.error(f"Error closing socket: {e}")
 
-        # Wait for threads to finish, if they're still alive
-        if self._recv_thread.is_alive():
-            self._recv_thread.join()
-        if self._conn_thread.is_alive():
-            self._conn_thread.join()
-        if self._g_info_thread.is_alive():
-            self._g_info_thread.join()
-        if self._g_att_thread.is_alive():
-            self._g_att_thread.join()
+        # Wait for threads to finish with a timeout to avoid hanging
+        for t in [self._recv_thread, self._conn_thread, self._g_info_thread, self._g_att_thread]:
+            if t.is_alive():
+                t.join(timeout=3)
 
         # Reset the stop flag and other variables
         self.resetVars()
@@ -197,13 +201,13 @@ class SIYISDK:
         --
         - t [float]: message frequency in seconds
         """
-        while not self._stop:
+        while not self._stop or self._reconnecting_camera:
             try:
                 self.checkConnection()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in connection loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in connection loop: {e}")
                 break
 
     # def recvLoop(self):
@@ -247,8 +251,9 @@ class SIYISDK:
                 self.requestGimbalInfo()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in gimbal info loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in gimbal info loop: {e}")
+                break
 
     def gimbalAttLoop(self, t):
         """
@@ -263,8 +268,9 @@ class SIYISDK:
                 self.requestGimbalAttitude()
                 sleep(t)
             except Exception as e:
-                self._logger.error(f"Error in gimbal attitude loop: {e}")
-                self.disconnect()
+                if not self._stop:
+                    self._logger.error(f"Error in gimbal attitude loop: {e}")
+                break
 
     def sendMsg(self, msg):
         """
@@ -274,12 +280,18 @@ class SIYISDK:
         --
         msg [str] Message to send
         """
+        if self._stop:
+            return False
         b = bytes.fromhex(msg)
         try:
-            self._socket.sendto(b, (self._server_ip, self._port))
+            with self._send_lock:
+                self._socket.sendto(b, (self._server_ip, self._port))
             return True
         except Exception as e:
-            self._logger.error("Could not send bytes")
+            if not self._stop and not self._reconnecting_camera:
+                self._logger.error(f"Could not send bytes: {e}")
+            else:
+                self._logger.debug(f"sendMsg: Ignoring send error {e}. Socket closed intentionally")
             return False
 
     def rcvMsg(self):
@@ -287,12 +299,16 @@ class SIYISDK:
         try:
             data,addr = self._socket.recvfrom(self._BUFF_SIZE)
         except Exception as e:
-            self._logger.warning("%s. Did not receive message within %s second(s)", e, self._rcv_wait_t)
+            # If socket was intentionally closed, suppress error noise
+            if not self._stop and not self._reconnecting_camera:
+                self._logger.warning(f"rcvMsg: {e}. Did not receive message within {self._rcv_wait_t} second(s)")
+            else:
+                self._logger.debug(f"rcvMsg: Ignoring {e}. Socket closed intentionally")
         return data
 
     def recvLoop(self):
         self._logger.debug("Started data receiving thread")
-        while( not self._stop):
+        while not self._stop:
             self.bufferCallback()
         self._logger.debug("Exiting data receiving thread")
 
@@ -304,7 +320,10 @@ class SIYISDK:
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
         except Exception as e:
-            self._logger.error(f"[bufferCallback] {e}")
+            if not self._stop and not self._reconnecting_camera:
+                self._logger.error(f"[bufferCallback] {e}")
+            else:
+                self._logger.debug(f"bufferCallback: Ignoring {e}. Socket closed intentionally")
             return
 
         buff_str = buff.hex()
@@ -375,6 +394,8 @@ class SIYISDK:
                 self.parseCurrentZoomLevelMsg(data, seq)
             elif cmd_id==COMMAND.ABSOLUTE_ZOOM:
                 self.parseZoomMsg(data, seq)
+            elif cmd_id==COMMAND.ACQUIRE_ENCODING_PARAMS:
+                self.parseEncodingParamsMsg(data, seq)
             else:
                 self._logger.warning("CMD ID is not recognized")
         
@@ -712,6 +733,22 @@ class SIYISDK:
         msg = self._out_msg.dataStreamMsg(2, freq)
         return self.sendMsg(msg)
 
+    def requestCameraEncoding(self, stream_type=1):
+        """
+        Send request to acquire camera encoding parameters for a specific stream type
+        
+        Params
+        ---
+        stream_type: [uint_8] type of stream for which to acquire encoding parameters
+            0: Recording stream
+            1: Main stream
+            2: Sub-stream
+        """
+
+        msg = self._out_msg.acquireEncodingParamsMsg(stream_type)
+
+        return self.sendMsg(msg)
+
     ####################################################
     #                Parsing functions                 #
     ####################################################
@@ -909,6 +946,39 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
+    def parseEncodingParamsMsg(self, msg:str, seq:int):
+        """
+        Parses the encoding parameters message and updates the corresponding message object.
+        The encoding parameters message contains information about the camera's current streaming settings, including:
+        - Stream type (recording, main, sub)
+        - Encoding type (H264, H265)
+        - Resolution (width and height)
+        - Bitrate - Frames per second (FPS)
+
+        Params
+        --
+        msg [str] The encoding parameters message in hex format
+        seq [int] The sequence number of the message
+
+        Returns
+        --
+        [bool] True if parsing is successful, False otherwise
+        """
+        try:
+            self._encoding_params_msg.seq = seq
+            self._encoding_params_msg.stream_type = int('0x'+msg[0:2], base=16)
+            self._encoding_params_msg.enc_type = int('0x'+msg[2:4], base=16)
+            
+            self._encoding_params_msg.width = int('0x'+msg[6:8]+msg[4:6], base=16)
+            self._encoding_params_msg.height = int('0x'+msg[10:12]+msg[8:10], base=16)
+            self._encoding_params_msg.bitrate = int('0x'+msg[14:16]+msg[12:14], base=16)
+            self._encoding_params_msg.fps = int('0x'+msg[16:18], base=16)
+
+            return True
+        except Exception as e:
+            self._logger.error("Error %s", e)
+            return False
+
 
     ##################################################
     #                   Get functions                #
@@ -954,6 +1024,31 @@ class SIYISDK:
     
     def getGimbalInfo(self):
         return(self._gimbal_info)
+
+    def getStreamType(self):
+        """
+        Returns the type of the streaming channel.
+
+        Returns
+        --
+        [str] The type of the streaming channel.
+        """
+        types = {0: "Recording stream", 1: "Main stream", 2: "Sub-stream"}
+        return (types.get(self._encoding_params_msg.stream_type, "Unknown"))
+
+    def getStreamingEncodingType(self):
+        codec = {1: "H264", 2: "H265"}
+        return (codec.get(self._encoding_params_msg.enc_type, "Unknown"))
+
+    def getStreamingResolution (self):
+        return (self._encoding_params_msg.width, self._encoding_params_msg.height)
+
+    def getStreamingBitrate(self):
+        return (self._encoding_params_msg.bitrate)
+
+    def getStreamingFPS(self):
+        return (self._encoding_params_msg.fps)     
+
 
     #################################################
     #                 Set functions                 #

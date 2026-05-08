@@ -125,7 +125,14 @@ class GimbalInfoMsg:
     motion_mode = MotionModeMsg()
     video_output_status = -1 # 0 means hdmi=on and cvbs=off, 1 means hdmi=off and cvbs=on, 2 means both off
 
-
+class EncodingParamsMsg:
+    seq = 0
+    stream_type = 1 # 0: Recording, 1: Main, 2: Sub 
+    enc_type = 1    # 1: H.264, 2: H.265 
+    width = 0
+    height = 0
+    bitrate = 0     # Kbps 
+    fps = 0
 
 class COMMAND:
     ACQUIRE_FW_VER = '01'
@@ -143,6 +150,7 @@ class COMMAND:
     SET_DATA_STREAM = '25'
     ABSOLUTE_ZOOM = '0f'
     CURRENT_ZOOM_VALUE = '18'
+    ACQUIRE_ENCODING_PARAMS = '20'
 
 
 #############################################
@@ -378,6 +386,18 @@ class SIYIMESSAGE:
         """
         data=""
         cmd_id = COMMAND.FUNC_FEEDBACK_INFO
+        return self.encodeMsg(data, cmd_id)
+
+    def acquireEncodingParamsMsg(self, stream_type):
+        """
+        Acquire encoding parameters msg
+        
+        Params
+        --
+        - stream_type [int] 0: Recording, 1: Main, 2: Sub
+        """
+        data = toHex(stream_type, 8)
+        cmd_id = COMMAND.ACQUIRE_ENCODING_PARAMS
         return self.encodeMsg(data, cmd_id)
 
     def takePhotoMsg(self):
