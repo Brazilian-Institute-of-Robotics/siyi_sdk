@@ -93,6 +93,8 @@ class SIYISDK:
         self._request_absolute_zoom_msg = RequestAbsoluteZoomMsg()
         self._current_zoom_level_msg = CurrentZoomValueMsg()
         self._encoding_params_msg = EncodingParamsMsg()
+        self._soft_reboot_ack = None
+        self._soft_reboot_seq = -1
         self._last_att_seq = -1
         self._gimbal_info = GimbalInfoMsg()
 
@@ -396,6 +398,8 @@ class SIYISDK:
                 self.parseZoomMsg(data, seq)
             elif cmd_id==COMMAND.ACQUIRE_ENCODING_PARAMS:
                 self.parseEncodingParamsMsg(data, seq)
+            elif cmd_id==COMMAND.SOFT_REBOOT:
+                self.parseSoftRebootMsg(data, seq)
             else:
                 self._logger.warning("CMD ID is not recognized")
         
@@ -749,6 +753,19 @@ class SIYISDK:
 
         return self.sendMsg(msg)
 
+    def requestSoftReboot(self, camera_reboot=0, gimbal_reset=0):
+        """
+        Send request for soft reboot
+
+        Params
+        ---
+        camera_reboot: [uint_8] 0: No action, 1: Camera reboot
+        gimbal_reset: [uint_8] 0: No action, 1: Gimbal reboot
+        """
+        msg = self._out_msg.softRebootMsg(camera_reboot, gimbal_reset)
+
+        return self.sendMsg(msg)
+
     ####################################################
     #                Parsing functions                 #
     ####################################################
@@ -979,6 +996,17 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
+    def parseSoftRebootMsg(self, msg:str, seq:int):
+        try:
+            self._soft_reboot_seq = seq
+            self._soft_reboot_ack = int('0x'+msg, base=16) if len(msg) > 0 else 0
+            self._logger.info("Soft reboot ACK received (ack=%s, seq=%s)",
+                              self._soft_reboot_ack,
+                              self._soft_reboot_seq)
+            return True
+        except Exception as e:
+            self._logger.error("Error parsing soft reboot response %s", e)
+            return False
 
     ##################################################
     #                   Get functions                #
