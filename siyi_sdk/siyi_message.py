@@ -151,6 +151,7 @@ class COMMAND:
     ABSOLUTE_ZOOM = '0f'
     CURRENT_ZOOM_VALUE = '18'
     ACQUIRE_ENCODING_PARAMS = '20'
+    SOFT_REBOOT = '80'
 
 
 #############################################
@@ -398,6 +399,14 @@ class SIYIMESSAGE:
         """
         data = toHex(stream_type, 8)
         cmd_id = COMMAND.ACQUIRE_ENCODING_PARAMS
+        return self.encodeMsg(data, cmd_id)
+
+    def softRebootMsg(self, camera_reboot=0, gimbal_reset=0):
+        """
+        Soft reboot msg
+        """
+        data=toHex(camera_reboot, 8) + toHex(gimbal_reset, 8)
+        cmd_id = COMMAND.SOFT_REBOOT
         return self.encodeMsg(data, cmd_id)
 
     def takePhotoMsg(self):
