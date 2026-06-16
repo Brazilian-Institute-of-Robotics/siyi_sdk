@@ -753,6 +753,28 @@ class SIYISDK:
 
         return self.sendMsg(msg)
 
+    def setCameraEncoding(self, stream_type=1, enc_type=2, width=1280, height=720, bitrate=1570):
+        """
+        Send request to set camera encoding parameters for a specific stream type
+        
+        Params
+        ---
+        stream_type: [uint_8] type of stream for which to set encoding parameters
+            0: Recording stream
+            1: Main stream
+            2: Sub-stream
+        enc_type: [uint_8] type of encoding
+            1: H.264
+            2: H.265
+        width: [uint_16] width of the video stream in pixels
+        height: [uint_16] height of the video stream in pixels
+        bitrate: [uint_16] bitrate of the video stream in Kbps
+        """
+
+        msg = self._out_msg.setEncodingParamsMsg(stream_type, enc_type, width, height, bitrate)
+
+        return self.sendMsg(msg)
+
     def requestSoftReboot(self, camera_reboot=0, gimbal_reset=0):
         """
         Send request for soft reboot

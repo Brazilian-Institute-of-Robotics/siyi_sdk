@@ -151,6 +151,7 @@ class COMMAND:
     ABSOLUTE_ZOOM = '0f'
     CURRENT_ZOOM_VALUE = '18'
     ACQUIRE_ENCODING_PARAMS = '20'
+    SET_ENCODING_PARAMS = '21'
     SOFT_REBOOT = '80'
 
 
@@ -399,6 +400,22 @@ class SIYIMESSAGE:
         """
         data = toHex(stream_type, 8)
         cmd_id = COMMAND.ACQUIRE_ENCODING_PARAMS
+        return self.encodeMsg(data, cmd_id)
+
+    def setEncodingParamsMsg(self, stream_type, enc_type, width, height, bitrate):
+        """
+        Set encoding parameters msg
+        
+        Params
+        --
+        - stream_type [int] 0: Recording, 1: Main, 2: Sub
+        - enc_type [int] 1: H.264, 2: H.265 
+        - width [int] in pixels. 1920 or 1280
+        - height [int] in pixels. 1080 or 720
+        - bitrate [int] in Kbps
+        """
+        data = toHex(stream_type, 8)+toHex(enc_type, 8)+toHex(width, 16)+toHex(height, 16)+toHex(bitrate, 16)
+        cmd_id = COMMAND.SET_ENCODING_PARAMS
         return self.encodeMsg(data, cmd_id)
 
     def softRebootMsg(self, camera_reboot=0, gimbal_reset=0):
