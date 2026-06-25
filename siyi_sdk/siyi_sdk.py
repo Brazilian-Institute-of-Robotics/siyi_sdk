@@ -76,6 +76,7 @@ class SIYISDK:
         Resets variables to their initial values.
         """
         self._connected = False
+        self._missed_heartbeats = 0
         self._fw_msg = FirmwareMsg()
         self._hw_msg = HardwareIDMsg()
         self._autoFocus_msg = AutoFocusMsg()
@@ -173,10 +174,13 @@ class SIYISDK:
         for t in [self._recv_thread, self._conn_thread, self._g_info_thread, self._g_att_thread]:
             if t.is_alive():
                 t.join(timeout=3)
+            self._logger.info(f"Thread {t.name} has been stopped")
+        self._logger.info("All threads stopped and resources cleaned up")
 
         # Reset the stop flag and other variables
         self.resetVars()
-        self._stop = False
+        if self._reconnecting_camera:
+            self._stop = False
 
     def checkConnection(self):
         """
@@ -189,8 +193,11 @@ class SIYISDK:
             if self._fw_msg.seq != self._last_fw_seq and len(self._fw_msg.gimbal_firmware_ver) > 0:
                 self._connected = True
                 self._last_fw_seq = self._fw_msg.seq
+                self._missed_heartbeats = 0
             else:
-                self._connected = False
+                self._missed_heartbeats += 1                
+                if self._missed_heartbeats >= 10:
+                    self._connected = False
         except Exception as e:
             self._logger.error(f"Connection check failed: {e}")
             self.disconnect()
@@ -322,6 +329,11 @@ class SIYISDK:
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
         except Exception as e:
+            if "Bad file descriptor" in str(e) or getattr(e, 'errno', None) == 9:
+                self._stop = True
+                self._logger.debug("bufferCallback: Socket closed.")
+                return
+
             if not self._stop and not self._reconnecting_camera:
                 self._logger.error(f"[bufferCallback] {e}")
             else:
@@ -400,6 +412,8 @@ class SIYISDK:
                 self.parseEncodingParamsMsg(data, seq)
             elif cmd_id==COMMAND.SOFT_REBOOT:
                 self.parseSoftRebootMsg(data, seq)
+            elif cmd_id==COMMAND.SET_ENCODING_PARAMS:
+                self._logger.debug("Set encoding params ACK received")
             else:
                 self._logger.warning("CMD ID is not recognized")
         
