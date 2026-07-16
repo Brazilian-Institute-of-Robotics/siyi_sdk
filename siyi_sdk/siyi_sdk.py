@@ -13,6 +13,7 @@ import logging
 from siyi_sdk.utils import  toInt
 import threading
 import siyi_sdk.cameras as cameras
+import errno
 
 
 class SIYISDK:
@@ -46,6 +47,9 @@ class SIYISDK:
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._rcv_wait_t = 5  # Receiving wait time
         self._socket.settimeout(self._rcv_wait_t)
+
+        # Max number of missed heartbeats before considering the connection lost
+        self._max_missed_heartbeats = 10
 
         self._send_lock = threading.Lock()
 
@@ -196,7 +200,7 @@ class SIYISDK:
                 self._missed_heartbeats = 0
             else:
                 self._missed_heartbeats += 1                
-                if self._missed_heartbeats >= 10:
+                if self._missed_heartbeats >= self._max_missed_heartbeats:
                     self._connected = False
         except Exception as e:
             self._logger.error(f"Connection check failed: {e}")
@@ -328,10 +332,9 @@ class SIYISDK:
         """
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
-        except Exception as e:
-            if "Bad file descriptor" in str(e) or getattr(e, 'errno', None) == 9:
+        except OSError as e:
+            if e.errno == errno.EBADF:
                 self._stop = True
-                self._logger.debug("bufferCallback: Socket closed.")
                 return
 
             if not self._stop and not self._reconnecting_camera:
@@ -1033,6 +1036,20 @@ class SIYISDK:
             return False
 
     def parseSoftRebootMsg(self, msg:str, seq:int):
+        """
+        Parses the soft reboot message and updates the corresponding message object.
+        The soft reboot message contains information about the acknowledgment of a
+        soft reboot command sent to the camera
+
+        Params
+        --
+        msg [str] The soft reboot message in hex format
+        seq [int] The sequence number of the message
+
+        Returns
+        --
+        [bool] True if parsing is successful, False otherwise
+        """
         try:
             self._soft_reboot_seq = seq
             self._soft_reboot_ack = int('0x'+msg, base=16) if len(msg) > 0 else 0
