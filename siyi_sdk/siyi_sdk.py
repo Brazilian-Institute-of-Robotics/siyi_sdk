@@ -13,6 +13,7 @@ import logging
 from siyi_sdk.utils import  toInt
 import threading
 import siyi_sdk.cameras as cameras
+import errno
 
 
 class SIYISDK:
@@ -47,6 +48,9 @@ class SIYISDK:
         self._rcv_wait_t = 5  # Receiving wait time
         self._socket.settimeout(self._rcv_wait_t)
 
+        # Max number of missed heartbeats before considering the connection lost
+        self._max_missed_heartbeats = 10
+
         self._send_lock = threading.Lock()
 
         self.resetVars()
@@ -76,6 +80,7 @@ class SIYISDK:
         Resets variables to their initial values.
         """
         self._connected = False
+        self._missed_heartbeats = 0
         self._fw_msg = FirmwareMsg()
         self._hw_msg = HardwareIDMsg()
         self._autoFocus_msg = AutoFocusMsg()
@@ -93,6 +98,8 @@ class SIYISDK:
         self._request_absolute_zoom_msg = RequestAbsoluteZoomMsg()
         self._current_zoom_level_msg = CurrentZoomValueMsg()
         self._encoding_params_msg = EncodingParamsMsg()
+        self._soft_reboot_ack = None
+        self._soft_reboot_seq = -1
         self._last_att_seq = -1
         self._gimbal_info = GimbalInfoMsg()
 
@@ -171,10 +178,13 @@ class SIYISDK:
         for t in [self._recv_thread, self._conn_thread, self._g_info_thread, self._g_att_thread]:
             if t.is_alive():
                 t.join(timeout=3)
+            self._logger.info(f"Thread {t.name} has been stopped")
+        self._logger.info("All threads stopped and resources cleaned up")
 
         # Reset the stop flag and other variables
         self.resetVars()
-        self._stop = False
+        if self._reconnecting_camera:
+            self._stop = False
 
     def checkConnection(self):
         """
@@ -187,8 +197,11 @@ class SIYISDK:
             if self._fw_msg.seq != self._last_fw_seq and len(self._fw_msg.gimbal_firmware_ver) > 0:
                 self._connected = True
                 self._last_fw_seq = self._fw_msg.seq
+                self._missed_heartbeats = 0
             else:
-                self._connected = False
+                self._missed_heartbeats += 1                
+                if self._missed_heartbeats >= self._max_missed_heartbeats:
+                    self._connected = False
         except Exception as e:
             self._logger.error(f"Connection check failed: {e}")
             self.disconnect()
@@ -319,7 +332,11 @@ class SIYISDK:
         """
         try:
             buff,addr = self._socket.recvfrom(self._BUFF_SIZE)
-        except Exception as e:
+        except OSError as e:
+            if e.errno == errno.EBADF:
+                self._stop = True
+                return
+
             if not self._stop and not self._reconnecting_camera:
                 self._logger.error(f"[bufferCallback] {e}")
             else:
@@ -396,6 +413,10 @@ class SIYISDK:
                 self.parseZoomMsg(data, seq)
             elif cmd_id==COMMAND.ACQUIRE_ENCODING_PARAMS:
                 self.parseEncodingParamsMsg(data, seq)
+            elif cmd_id==COMMAND.SOFT_REBOOT:
+                self.parseSoftRebootMsg(data, seq)
+            elif cmd_id==COMMAND.SET_ENCODING_PARAMS:
+                self._logger.debug("Set encoding params ACK received")
             else:
                 self._logger.warning("CMD ID is not recognized")
         
@@ -749,6 +770,41 @@ class SIYISDK:
 
         return self.sendMsg(msg)
 
+    def setCameraEncoding(self, stream_type=1, enc_type=2, width=1280, height=720, bitrate=1570):
+        """
+        Send request to set camera encoding parameters for a specific stream type
+        
+        Params
+        ---
+        stream_type: [uint_8] type of stream for which to set encoding parameters
+            0: Recording stream
+            1: Main stream
+            2: Sub-stream
+        enc_type: [uint_8] type of encoding
+            1: H.264
+            2: H.265
+        width: [uint_16] width of the video stream in pixels
+        height: [uint_16] height of the video stream in pixels
+        bitrate: [uint_16] bitrate of the video stream in Kbps
+        """
+
+        msg = self._out_msg.setEncodingParamsMsg(stream_type, enc_type, width, height, bitrate)
+
+        return self.sendMsg(msg)
+
+    def requestSoftReboot(self, camera_reboot=0, gimbal_reset=0):
+        """
+        Send request for soft reboot
+
+        Params
+        ---
+        camera_reboot: [uint_8] 0: No action, 1: Camera reboot
+        gimbal_reset: [uint_8] 0: No action, 1: Gimbal reboot
+        """
+        msg = self._out_msg.softRebootMsg(camera_reboot, gimbal_reset)
+
+        return self.sendMsg(msg)
+
     ####################################################
     #                Parsing functions                 #
     ####################################################
@@ -979,6 +1035,31 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
+    def parseSoftRebootMsg(self, msg:str, seq:int):
+        """
+        Parses the soft reboot message and updates the corresponding message object.
+        The soft reboot message contains information about the acknowledgment of a
+        soft reboot command sent to the camera
+
+        Params
+        --
+        msg [str] The soft reboot message in hex format
+        seq [int] The sequence number of the message
+
+        Returns
+        --
+        [bool] True if parsing is successful, False otherwise
+        """
+        try:
+            self._soft_reboot_seq = seq
+            self._soft_reboot_ack = int('0x'+msg, base=16) if len(msg) > 0 else 0
+            self._logger.info("Soft reboot ACK received (ack=%s, seq=%s)",
+                              self._soft_reboot_ack,
+                              self._soft_reboot_seq)
+            return True
+        except Exception as e:
+            self._logger.error("Error parsing soft reboot response %s", e)
+            return False
 
     ##################################################
     #                   Get functions                #
